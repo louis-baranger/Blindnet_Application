@@ -4,8 +4,10 @@ from os import urandom
 from os import remove
 
 from pathlib import Path
+from base64 import b64encode
+from base64 import b64decode
 from base64 import urlsafe_b64encode
-import shutil
+
 import requests
 
 from cryptography.fernet import Fernet
@@ -60,9 +62,15 @@ def send_file(path, type_of_send):
     salt = encrypt_file(path, path_copy, password)
 
     file = {'file': open(path_copy, 'rb')}
+
+    # Transforms salt into string to avoid errors during transmission
+    salt = b64encode(salt).decode('utf-8')
+    # Command to run to decode:
+    # salt = b64decode(salt.encode('utf-8'))
     values = {'extension': p.suffix, 'salt': salt, 'type': type_of_send, 'name': p.stem}
 
     r = requests.post(url, files=file, headers=values)
+    print(r.content)
 
     if r.status_code == 200:
         remove(path_copy)
@@ -116,5 +124,13 @@ def send_string():
 
 
 def fetch():
-    print("TODO: Implement fetch")
+    print("Please, input the Unique ID of the file:")
+    unique_id = input()
+
+    values = {'id': str(unique_id)}
+    r = requests.get(url, headers=values)
+
+    # Binary string of file content
+    print(r.content)
+    print(r.headers)
     return
