@@ -2,17 +2,22 @@
 
 import Client_helper as ch
 
-print("Welcome message")
+settings = ch.SettingsClient
 
+print("Welcome,")
 while True:
-    print("Would you like to send data, fetch data, or quit?")
+    print("Please, input u to upload data, d to download data,"
+          " q to quit, or s to change settings:")
     choice = input()
-    if choice == "s":
-        ch.send()
-    elif choice == "f":
-        ch.fetch()
+    print()
+    if choice == "u":
+        ch.send(settings)
+    elif choice == "d":
+        ch.fetch(settings)
     elif choice == "q":
         break
+    elif choice == "s":
+        settings.menu()
     else:
         print("Wrong input.")
         print("Please, input s to send, f to fetch, or q to quit:")
