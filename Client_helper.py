@@ -9,10 +9,9 @@ from base64 import b64encode
 from base64 import b64decode
 from base64 import urlsafe_b64encode
 
-import cryptography.fernet
+import cryptography.fernet as cf
 import requests
 
-from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
@@ -29,7 +28,7 @@ def send(settings):
             send_file(settings, path, "file")
             break
         elif choice == "s":
-            send_string()
+            send_string(settings)
             break
         elif choice == "c":
             print("Send request cancelled.")
@@ -51,7 +50,6 @@ def send_file(settings, path, type_of_send):
     print()
 
     directory = dirname(path)
-    # TODO: This will not work with multiple file extensions e.g. ".tar.gz"
     path_copy = directory + '/' + p.stem + "_copy" + p.suffix
 
     i = 0
@@ -65,12 +63,12 @@ def send_file(settings, path, type_of_send):
 
     # Transforms salt into string to avoid errors during transmission
     salt = b64encode(salt).decode('utf-8')
-    # Command to run to decode:
-    # salt = b64decode(salt.encode('utf-8'))
     values = {'extension': p.suffix, 'salt': salt, 'type': type_of_send, 'name': p.stem}
 
     try:
         r = requests.post(settings.url, files=file, headers=values)
+        if type_of_send == 'string':
+            remove(path)
     except:
         print("Error during file transmission to server.")
         remove(path_copy)
@@ -95,7 +93,7 @@ def encrypt_file(path, path_copy, password):
 
     key = urlsafe_b64encode(kdf.derive(password))
 
-    fernet = Fernet(key)
+    fernet = cf.Fernet(key)
     original = open(path, 'rb').read()
     encrypted = fernet.encrypt(original)
 
@@ -105,7 +103,7 @@ def encrypt_file(path, path_copy, password):
     return salt
 
 
-def send_string():
+def send_string(settings):
     print("Please, input the string:")
     text = input().encode('ascii')
     print()
@@ -114,12 +112,14 @@ def send_string():
     i = 0
     while exists(path_to_encrypt):
         path_to_encrypt = "temp_" + str(i) + ".txt"
+        i += 1
 
     f = open(path_to_encrypt, "wb")
     f.write(text)
     f.close()
 
-    send_file(path_to_encrypt, "string")
+    path_to_encrypt = getcwd() + '/' + path_to_encrypt
+    send_file(settings, path_to_encrypt, "string")
     return
 
 
@@ -157,6 +157,7 @@ def fetch(settings):
         print("String is:")
         print(file.read().decode('ascii'))
         file.close()
+        remove(path)
 
     return
 
@@ -180,19 +181,18 @@ def decrypt_file(settings, request, password):
 
     key = urlsafe_b64encode(kdf.derive(password))
 
-    fernet = Fernet(key)
+    fernet = cf.Fernet(key)
     try:
         file.write(fernet.decrypt(request.content))
         file.close()
         return path
-    except cryptography.fernet.InvalidToken:
+    except cf.InvalidToken:
         file.close()
         print('Error during decryption most likely due to a wrong password.')
         return 'N/A'
 
 
 class SettingsClient:
-
     def menu(self):
         choice = 0
         while choice != 3:
@@ -200,7 +200,10 @@ class SettingsClient:
             print("1. Server URL")
             print("2. Download path")
             print("3. Exit settings")
-            choice = int(input())
+            try:
+                choice = int(input())
+            except ValueError:
+                print("Invalid input")
             if choice == 1:
                 print("URL:")
                 self.url = input()
@@ -211,6 +214,8 @@ class SettingsClient:
                     self.download_path = temp_path
                 else:
                     print("Invalid path")
+                if temp_path[-1] == '/':
+                    self.download_path = self.download_path[0:-1]
 
         return
 

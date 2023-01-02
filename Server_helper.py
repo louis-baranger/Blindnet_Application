@@ -31,8 +31,10 @@ class SettingsServer:
             print("2. Host")
             print("3. Port")
             print("4. Exit settings and start server")
-
-            choice = int(input())
+            try:
+                choice = int(input())
+            except ValueError:
+                print("Invalid input.")
             if choice == 1:
                 print("Storage Folder:")
                 temp_path = input()

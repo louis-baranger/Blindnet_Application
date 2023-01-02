@@ -22,7 +22,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         encrypted_file.write(body)
         encrypted_file.close()
 
-        metadata = open(settings.storage_folder + '/' + current_id + ".txt", 'w')
+        metadata = open(settings.storage_folder + '/' + current_id + '_metadata.txt', 'w')
         metadata.write(self.headers['name'])
         metadata.write('\n')
         metadata.write(self.headers['extension'])
@@ -37,7 +37,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(current_id.encode('ascii'))
 
     def do_GET(self):
-        if exists(self.headers['id'] + '.txt'):
+        if exists(settings.storage_folder + '/' + self.headers['id'] + '_metadata.txt'):
             self.get_file()
             self.end_headers()
         else:
@@ -49,7 +49,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         return
 
     def get_file(self):
-        metadata = open(settings.storage_folder + '/' + self.headers['id'] + '.txt', 'r')
+        metadata = open(settings.storage_folder + '/' + self.headers['id'] + '_metadata.txt', 'r')
         name = str(metadata.readline()[:-1])
         extension = str(metadata.readline()[:-1])
         salt = str(metadata.readline()[:-1])

@@ -2,7 +2,7 @@
 
 import Client_helper as ch
 
-settings = ch.SettingsClient
+settings = ch.SettingsClient()
 
 print("Welcome,")
 while True:
